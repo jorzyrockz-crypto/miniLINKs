@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>stub.li — link shortener</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #171B22;
+    --bg-soft: #1D222B;
+    --card: #EFE7D6;
+    --card-edge: #E2D8C0;
+    --ink: #23201A;
+    --ink-muted: #6B6252;
+    --teal: #2F9E8F;
+    --teal-dark: #227A6F;
+    --amber: #D8A13A;
+    --parchment: #F1EAD9;
+    --slate: #8C93A0;
+    --danger: #C4573F;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: radial-gradient(ellipse at top, var(--bg-soft) 0%, var(--bg) 55%);
+    font-family: 'Inter', sans-serif;
+    color: var(--parchment);
+    min-height: 100vh;
+    padding: 40px 20px 60px;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; }
+  .hero { text-align: center; margin-bottom: 28px; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    color: var(--teal); font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; letter-spacing: 0.14em; margin-bottom: 10px;
+    cursor: pointer; background: none; border: none;
+  }
+  h1 {
+    font-family: 'Space Grotesk', sans-serif; font-weight: 700;
+    font-size: clamp(28px, 5vw, 40px); margin: 0; line-height: 1.15;
+  }
+  .sub { color: var(--slate); font-size: 14.5px; margin-top: 10px; }
+
+  .panel {
+    background: var(--card); border-radius: 12px; padding: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35); margin-bottom: 24px;
+  }
+  label {
+    display: block; font-family: 'Space Grotesk', sans-serif; font-weight: 600;
+    font-size: 11.5px; letter-spacing: 0.04em; color: var(--ink-muted);
+    margin-bottom: 6px; text-transform: uppercase;
+  }
+  input {
+    width: 100%; padding: 10px 12px; border-radius: 8px;
+    border: 1.5px solid var(--card-edge); font-family: 'JetBrains Mono', monospace;
+    font-size: 13.5px; color: var(--ink); background: #fff;
+  }
+  input::placeholder { color: var(--slate); }
+  .row { display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+  .row > div { flex: 1; min-width: 180px; }
+  .field-error { color: var(--danger); font-size: 12.5px; margin-top: 10px; }
+
+  button {
+    display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+    font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 12px;
+    padding: 6px 12px; border-radius: 6px; border: none; transition: transform .12s, opacity .12s;
+  }
+  button:hover { opacity: .88; transform: translateY(-1px); }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+  .btn-primary { background: var(--teal); color: #fff; padding: 11px 20px; font-size: 13.5px; }
+  .btn-ghost { background: transparent; color: var(--ink); border: 1.5px solid rgba(35,32,26,0.4); }
+  .btn-ghost.on-dark { color: var(--slate); border-color: rgba(140,147,160,0.4); }
+  .btn-danger { background: transparent; color: var(--danger); border: 1.5px solid rgba(196,87,63,0.4); }
+  .btn-amber { background: var(--amber); color: #fff; }
+  .btn-dark { background: var(--ink); color: var(--card); }
+
+  .stats-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 14px; flex-wrap: wrap; gap: 10px;
+  }
+  .stats-bar .counts { display: flex; gap: 18px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; color: var(--slate); }
+  .stats-bar strong { color: var(--parchment); }
+  .search-wrap { position: relative; }
+  .search-wrap input {
+    padding: 7px 10px 7px 30px; font-size: 12.5px; background: var(--bg-soft);
+    color: var(--parchment); border: 1.5px solid rgba(140,147,160,0.35); width: 160px;
+  }
+  .search-wrap svg { position: absolute; left: 9px; top: 8px; }
+
+  .empty {
+    text-align: center; padding: 40px 20px; color: var(--slate);
+    border: 1.5px dashed rgba(140,147,160,0.3); border-radius: 12px; font-size: 13.5px;
+  }
+
+  .stub { position: relative; display: flex; background: var(--card); border-radius: 10px; box-shadow: 0 6px 16px rgba(0,0,0,0.28); margin-bottom: 18px; }
+  .stub-badge {
+    position: absolute; top: -10px; right: -10px; transform: rotate(-14deg);
+    border: 2px solid var(--danger); color: var(--danger); font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700; font-size: 11px; letter-spacing: 0.12em; padding: 3px 8px; border-radius: 4px;
+    background: rgba(239,231,214,0.9); animation: stampIn 0.4s cubic-bezier(.2,1.4,.4,1); pointer-events: none;
+  }
+  @keyframes stampIn { 0% { opacity:0; transform: rotate(-14deg) scale(1.8);} 60%{opacity:1;} 100%{opacity:1; transform: rotate(-14deg) scale(1);} }
+  .stub-code {
+    position: relative; width: 128px; flex-shrink: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 18px 8px; border-right: 2px dashed rgba(107,98,82,0.35);
+  }
+  .stub-code .hole { position: absolute; right: -8px; width: 16px; height: 16px; border-radius: 50%; background: var(--bg); }
+  .stub-code .hole.top { top: -8px; } .stub-code .hole.bottom { bottom: -8px; }
+  .stub-code .alias { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 15px; color: var(--ink); word-break: break-all; text-align: center; line-height: 1.3; }
+  .stub-code .domain { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--ink-muted); margin-top: 6px; letter-spacing: 0.06em; text-align: center; }
+  .stub-body { flex: 1; padding: 16px 18px; min-width: 0; }
+  .stub-body .url { font-size: 13px; color: var(--ink); word-break: break-all; margin-bottom: 10px; line-height: 1.45; }
+  .stub-body .meta { display: flex; align-items: center; gap: 14px; font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--ink-muted); margin-bottom: 12px; }
+  .stub-body .meta .clicks { color: var(--teal-dark); font-weight: 700; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+  .qr-box { margin-top: 14px; display: flex; align-items: center; gap: 12px; }
+  .qr-box img { border-radius: 6px; border: 1px solid var(--card-edge); }
+  .qr-box p { font-size: 11.5px; color: var(--ink-muted); max-width: 160px; margin: 0; }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--ink); color: var(--parchment); padding: 10px 18px; border-radius: 8px;
+    font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 600;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4); opacity: 0; pointer-events: none; transition: opacity .2s;
+  }
+  .toast.show { opacity: 1; }
+
+  .hidden { display: none !important; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <button class="eyebrow" id="settingsToggle" title="Connection settings">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span id="domainLabel">connect a worker</span>
+    </button>
+    <h1>Turn long links into stubs.</h1>
+    <p class="sub">Paste a URL, cut a stub, keep the receipt.</p>
+  </div>
+
+  <div class="panel" id="settingsPanel">
+    <label>Worker URL</label>
+    <input id="apiBaseInput" placeholder="https://stub-li.yourname.workers.dev" />
+    <div class="row">
+      <div>
+        <label>Admin key</label>
+        <input id="adminKeyInput" type="password" placeholder="the ADMIN_KEY secret you set in GitHub" />
+      </div>
+      <div style="display:flex; align-items:flex-end; gap:8px;">
+        <button class="btn-primary" id="saveSettings">Save & connect</button>
+      </div>
+    </div>
+    <div class="field-error hidden" id="settingsError"></div>
+  </div>
+
+  <form class="panel hidden" id="createForm">
+    <label>Long URL</label>
+    <input id="longUrlInput" placeholder="https://example.com/a/very/long/path?with=params" />
+    <div class="row">
+      <div>
+        <label>Custom stub (optional)</label>
+        <input id="aliasInput" placeholder="my-stub" />
+      </div>
+      <div style="display:flex; align-items:flex-end;">
+        <button type="submit" class="btn-primary" id="createBtn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.12 15.88M14.47 14.48L20 20M8.12 8.12L12 12"/></svg>
+          Cut stub
+        </button>
+      </div>
+    </div>
+    <div class="field-error hidden" id="formError"></div>
+  </form>
+
+  <div class="stats-bar hidden" id="statsBar">
+    <div class="counts">
+      <span><strong id="countLinks">0</strong> stubs</span>
+      <span><strong id="countClicks">0</strong> clicks</span>
+    </div>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <div class="search-wrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8C93A0" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input id="searchInput" placeholder="Filter stubs…" />
+      </div>
+      <button class="btn-ghost on-dark" id="refreshBtn">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <div id="listArea"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+let config = null;
+let links = [];
+let query = "";
+let openQr = null;
+
+function loadConfig() {
+  try {
+    const raw = localStorage.getItem("stubli_config");
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+function saveConfig(cfg) {
+  localStorage.setItem("stubli_config", JSON.stringify(cfg));
+}
+
+function showToast(msg) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 1500);
+}
+
+function apiHeaders() {
+  return { "Content-Type": "application/json", "Authorization": "Bearer " + config.adminKey };
+}
+
+async function testAndLoad() {
+  $("settingsError").classList.add("hidden");
+  try {
+    const health = await fetch(config.apiBase + "/api/health");
+    if (!health.ok) throw new Error("Worker did not respond");
+    const res = await fetch(config.apiBase + "/api/links", { headers: apiHeaders() });
+    if (res.status === 401) throw new Error("Admin key rejected — check it matches your GitHub secret");
+    if (!res.ok) throw new Error("Could not load links (" + res.status + ")");
+    links = await res.json();
+    onConnected();
+  } catch (err) {
+    $("settingsError").textContent = err.message;
+    $("settingsError").classList.remove("hidden");
+    $("settingsPanel").classList.remove("hidden");
+    $("createForm").classList.add("hidden");
+    $("statsBar").classList.add("hidden");
+  }
+}
+
+function onConnected() {
+  $("settingsPanel").classList.add("hidden");
+  $("createForm").classList.remove("hidden");
+  $("statsBar").classList.remove("hidden");
+  try {
+    $("domainLabel").textContent = new URL(config.apiBase).host;
+  } catch {
+    $("domainLabel").textContent = "connected";
+  }
+  render();
+}
+
+function timeAgo(ts) {
+  const s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 60) return "just now";
+  const m = Math.floor(s / 60);
+  if (m < 60) return m + "m ago";
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + "h ago";
+  return Math.floor(h / 24) + "d ago";
+}
+
+function render() {
+  const filtered = links.filter(l =>
+    !query.trim() ||
+    l.code.toLowerCase().includes(query.toLowerCase()) ||
+    l.longUrl.toLowerCase().includes(query.toLowerCase())
+  );
+  $("countLinks").textContent = links.length;
+  $("countClicks").textContent = links.reduce((s, l) => s + (l.clicks || 0), 0);
+
+  const area = $("listArea");
+  if (filtered.length === 0) {
+    area.innerHTML = `<div class="empty">${links.length === 0 ? "No stubs cut yet. Paste a URL above to make your first one." : "No stubs match that filter."}</div>`;
+    return;
+  }
+
+  const host = (() => { try { return new URL(config.apiBase).host; } catch { return ""; } })();
+
+  area.innerHTML = filtered.map(l => {
+    const shortUrl = config.apiBase.replace(/\/$/, "") + "/" + l.code;
+    const truncated = l.longUrl.length > 90 ? l.longUrl.slice(0, 90) + "…" : l.longUrl;
+    const qrOpen = openQr === l.code;
+    return `
+    <div class="stub">
+      ${l._fresh ? '<div class="stub-badge">ISSUED</div>' : ''}
+      <div class="stub-code">
+        <div class="hole top"></div>
+        <div class="hole bottom"></div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2F9E8F" stroke-width="2" style="margin-bottom:6px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <div class="alias">/${l.code}</div>
+        <div class="domain">${host}</div>
+      </div>
+      <div class="stub-body">
+        <div class="url" title="${l.longUrl}">${truncated}</div>
+        <div class="meta">
+          <span>${timeAgo(l.createdAt)}</span>
+          <span>•</span>
+          <span class="clicks">${l.clicks || 0} ${l.clicks === 1 ? "click" : "clicks"}</span>
+        </div>
+        <div class="actions">
+          <button class="btn-primary" style="padding:6px 12px;font-size:12px;" onclick="visitLink('${l.code}','${shortUrl}')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            Visit
+          </button>
+          <button class="btn-ghost" onclick="copyLink('${shortUrl}', this)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy
+          </button>
+          <button class="btn-ghost" onclick="toggleQr('${l.code}')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><line x1="14" y1="14" x2="14" y2="21"/><line x1="21" y1="14" x2="21" y2="21"/><line x1="14" y1="17.5" x2="21" y2="17.5"/></svg>
+            QR
+          </button>
+          <button class="btn-danger" onclick="deleteLink('${l.code}')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        </div>
+        ${qrOpen ? `
+        <div class="qr-box">
+          <img src="https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(shortUrl)}" width="100" height="100" alt="QR code for ${shortUrl}" />
+          <p>Scan to open this stub on another device.</p>
+        </div>` : ""}
+      </div>
+    </div>`;
+  }).join("");
+}
+
+async function refresh() {
+  const res = await fetch(config.apiBase + "/api/links", { headers: apiHeaders() });
+  if (res.ok) { links = await res.json(); render(); }
+}
+
+async function visitLink(code, shortUrl) {
+  window.open(shortUrl, "_blank", "noopener,noreferrer");
+  setTimeout(refresh, 900);
+}
+
+async function copyLink(shortUrl, btn) {
+  try {
+    await navigator.clipboard.writeText(shortUrl);
+    showToast("Copied " + shortUrl);
+  } catch {
+    showToast("Couldn't copy — copy manually: " + shortUrl);
+  }
+}
+
+function toggleQr(code) {
+  openQr = openQr === code ? null : code;
+  render();
+}
+
+async function deleteLink(code) {
+  if (!confirm("Delete /" + code + "? This can't be undone.")) return;
+  await fetch(config.apiBase + "/api/links/" + encodeURIComponent(code), {
+    method: "DELETE", headers: apiHeaders()
+  });
+  links = links.filter(l => l.code !== code);
+  render();
+}
+
+$("createForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const err = $("formError");
+  err.classList.add("hidden");
+  const longUrl = $("longUrlInput").value.trim();
+  const alias = $("aliasInput").value.trim();
+  const btn = $("createBtn");
+  if (!longUrl) { err.textContent = "Paste a URL to shorten."; err.classList.remove("hidden"); return; }
+  const normalized = /^https?:\/\//i.test(longUrl) ? longUrl : "https://" + longUrl;
+
+  btn.disabled = true;
+  btn.textContent = "Cutting…";
+  try {
+    const res = await fetch(config.apiBase + "/api/links", {
+      method: "POST", headers: apiHeaders(),
+      body: JSON.stringify({ longUrl: normalized, alias })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Could not create stub");
+    data._fresh = true;
+    links.unshift(data);
+    $("longUrlInput").value = "";
+    $("aliasInput").value = "";
+    render();
+    setTimeout(() => { data._fresh = false; render(); }, 1600);
+  } catch (ex) {
+    err.textContent = ex.message;
+    err.classList.remove("hidden");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4L8.12 15.88M14.47 14.48L20 20M8.12 8.12L12 12"/></svg> Cut stub';
+  }
+});
+
+$("searchInput").addEventListener("input", (e) => { query = e.target.value; render(); });
+$("refreshBtn").addEventListener("click", refresh);
+$("settingsToggle").addEventListener("click", () => $("settingsPanel").classList.toggle("hidden"));
+
+$("saveSettings").addEventListener("click", async () => {
+  const apiBase = $("apiBaseInput").value.trim().replace(/\/$/, "");
+  const adminKey = $("adminKeyInput").value.trim();
+  if (!apiBase || !adminKey) {
+    $("settingsError").textContent = "Both fields are required.";
+    $("settingsError").classList.remove("hidden");
+    return;
+  }
+  config = { apiBase, adminKey };
+  saveConfig(config);
+  await testAndLoad();
+});
+
+(function init() {
+  config = loadConfig();
+  if (config && config.apiBase && config.adminKey) {
+    $("apiBaseInput").value = config.apiBase;
+    $("adminKeyInput").value = config.adminKey;
+    testAndLoad();
+  } else {
+    $("settingsPanel").classList.remove("hidden");
+  }
+})();
+</script>
+</body>
+</html>

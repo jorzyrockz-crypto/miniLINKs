@@ -1,0 +1,16 @@
+name = "stub-li"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+# After running `wrangler kv namespace create LINKS` from inside the worker/
+# folder, paste the returned id below.
+kv_namespaces = [
+  { binding = "LINKS", id = "REPLACE_WITH_KV_NAMESPACE_ID" }
+]
+
+# Non-secret config. ADMIN_KEY, PAYMONGO_SECRET_KEY, and PAYMONGO_WEBHOOK_SECRET
+# are set as Worker secrets instead (see the GitHub Action / README) — never
+# put real keys in this file, since it's committed to the repo.
+[vars]
+PRO_PRICE_PHP = "149"
+PUBLIC_FREE_LIMIT = "10"
